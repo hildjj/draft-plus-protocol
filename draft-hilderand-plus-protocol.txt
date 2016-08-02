@@ -1,0 +1,280 @@
+
+
+
+
+Network Working Group                                      J. Hildebrand
+Internet-Draft                                             Cisco Systems
+Intended status: Standards Track                         August 02, 2016
+Expires: February 3, 2017
+
+
+                             PLUS Protocol
+                     draft-hildebrand-plus-protocol
+
+Abstract
+
+   Minimal in-band firewall and load balancer signaling for UDP.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on February 3, 2017.
+
+Copyright Notice
+
+   Copyright (c) 2016 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+
+
+Hildebrand              Expires February 3, 2017                [Page 1]
+
+Internet-Draft                plus-protocol                  August 2016
+
+
+1.  Introduction
+
+1.1.  Terms
+
+   o  Initiator: The program initiating the protocol exchange.  Often
+      thought of as the "client" in a client-server protocol.
+
+   o  Responder: The program receiving the initiation request.  Often
+      thought of as the "server" in a client-server protocol.
+
+   o  Transport' protocol: the layer inside PLUS that is providing
+      semantics such as those described in [I-D.ietf-taps-transports].
+
+1.2.  Requirements
+
+   o  Hint to Initiator's network path that PLUS is likely in use
+
+   o  Hint to Initiator's network path that Initiator wants to initiate
+      a new connection
+
+   o  Further indication to path that PLUS protocol is in use when
+      Responder's messages are seen by the path, better than 5-tuple.
+
+   o  Matching Responder's packets to Initiator's intent to communicate,
+      better than 5-tuple
+
+2.  Protocol
+
+2.1.  Bit pattern: Initiator
+
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                       magic = 0xd80000d8                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                               |R|R|           |
+   |                Conection ID                   |S|S|   tflags  |
+   |                                               |T|V|           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   The following bits are defined:
+
+   o  Magic Constant, 32 bits
+
+   o  Connection ID, 24 bits
+
+   o  RST, 1 bit: Reset
+
+
+
+
+Hildebrand              Expires February 3, 2017                [Page 2]
+
+Internet-Draft                plus-protocol                  August 2016
+
+
+   o  RSV, 1bits: reserved for future use in this protocol
+
+   o  tflags: 6 bits: available for use in the next layer
+
+   More about the magic number, how it was found, how you could generate
+   new ones.  The magic number is also effectively a version number for
+   this layer.
+
+2.2.  Bit pattern: Responder
+
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                               |R|R|           |
+   |                        hmac                   |S|S|   tflags  |
+   |                                               |T|V|           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   The following bits are defined:
+
+   o  hmac, 24 bits: HMAC_SHA256(magic, ConnectionID), truncated
+
+   o  RST, 1 bit: Reset
+
+   o  RSV, 1bits: reserved for future use in this protocol
+
+   o  tflags: 6 bits: available for use in the next layer
+
+2.3.  Indication of implementation
+
+   The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses
+   the first 3 bytes as the first 3 bytes of the reply.  This is used as
+   a further hint that the magic number use was intentional.  Call this
+   function Indicator(ConnectionID).
+
+   Usefully, none of these truncated HMACs return the magic number.
+
+3.  Processing
+
+   Basic idea: Initiator sends bits defined in Section 2.1, Responder
+   sends bits defined in Section 2.2.  Initiator always has to send
+   first over every new path.
+
+3.1.  Processing by applications
+
+   o  If the RSV bit is set, ignore the packet
+
+
+
+
+
+Hildebrand              Expires February 3, 2017                [Page 3]
+
+Internet-Draft                plus-protocol                  August 2016
+
+
+   o  Initiator: If the hmac doesn't match what you expect, it's either
+      an attack or leftover traffic from a previous connection.  Maybe
+      send an unsigned RST? (maybe this is a policy or transport-
+      specific decision)
+
+   o  Responder: If the magic number isn't there, it's likely an attack.
+      Probably best to ignore it.
+
+3.2.  Processing by path elements
+
+   o  Assume that all bits are protected by next layer, so you can't
+      change them.  Even if you could change them, you may as well just
+      drop the packet, since delivery won't work.
+
+   o  Don't think that having RSV set means this is an attack.  It's
+      just something we haven't specified as of the time you wrote your
+      code.
+
+3.3.  From inside to outside:
+
+   o  Match magic number
+
+      *  If not, treat as non-PLUS UDP; use port for example
+
+   o  Forward 6tuple = 5tuple + ConnectionID
+
+   o  Reverse 6tuple = Reverse 5tuple + Indicator(ConnectionID)
+
+   o  Look up Forward
+
+      *  If not, create state keyed by Forward and Reverse
+
+   o  Reset timer
+
+      *  When timer fires, either drop state or send RST hint both ways
+         without e2e crypto
+
+   o  Allow
+
+3.4.  From outside to inside:
+
+   o  Look up Reverse, allow if match
+
+      *  If not, treat as non-PLUS UDP
+
+   (TODO: determine if reverse timer is useful)
+
+
+
+
+
+Hildebrand              Expires February 3, 2017                [Page 4]
+
+Internet-Draft                plus-protocol                  August 2016
+
+
+4.  Guidelines for next layer
+
+   New transport' protocols like QUIC.
+
+   o  Define tflags as you see fit
+
+   o  Consider if these bits need protection.  At least tflags do.
+
+   o  Consider multipath consequences, send before you receive on each
+      path, and consider using a different ConnectionID on different
+      paths to make tracking harder.  If so, figure out how load
+      balancers are going to deal with the problem.
+
+5.  Security Considerations
+
+   Next layer transport protocols SHOULD discuss whether any of these
+   bits need to be protected.
+
+   Discuss the actual number of bits that window tracking gives you for
+   TCP.  Contrast this with how useful this would be for tracking
+   people.
+
+   ConnectionID's MUST NOT be under the control of untrusted code, like
+   JavaScript.  It's likely there's a reason for making them not
+   available to untrusted code as well.
+
+6.  IANA Considerations
+
+   Do we need a registry of magic numbers?
+
+7.  Informative References
+
+   [I-D.ietf-taps-transports]
+              Fairhurst, G., Trammell, B., and M. Kuehlewind, "Services
+              provided by IETF transport protocols and congestion
+              control mechanisms", draft-ietf-taps-transports-11 (work
+              in progress), July 2016.
+
+Author's Address
+
+   Joe Hildebrand
+   Cisco Systems
+
+   Email: jhildebr@cisco.com
+
+
+
+
+
+
+
+Hildebrand              Expires February 3, 2017                [Page 5]
