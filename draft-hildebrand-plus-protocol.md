@@ -12,6 +12,11 @@ author:
     name: Joe Hildebrand
     organization: Cisco Systems
     email: jhildebr@cisco.com
+ -
+    ins: B. Trammell
+    name: Brian Trammell
+    organization: ETH Zurich
+    email: ietf@trammell.ch
 
 informative:
   I-D.ietf-taps-transports:
@@ -24,14 +29,11 @@ Minimal in-band firewall and load balancer signaling for UDP.
 
 # Introduction
 
-## Terms
-
-- Initiator: The program initiating the protocol exchange.  Often thought of
-  as the "client" in a client-server protocol.
-- Responder: The program receiving the initiation request.  Often thought of
-  as the "server" in a client-server protocol.
-- Transport' protocol: the layer inside PLUS that is providing semantics
-  such as those described in {{I-D.ietf-taps-transports}}.
+This document defines a common minimal path layer protocol for UDP-
+encapsulated transport protocols with  in order to provide minimal, transport-
+independent state exposure to support firewall and load balancer operation
+[EDITOR'S NOTE cite appropriate section of draft-kuehlewind-plus-ps once it
+exists].
 
 ## Requirements
 
@@ -43,32 +45,64 @@ Minimal in-band firewall and load balancer signaling for UDP.
 - Matching Responder's packets to Initiator's intent to communicate, better
   than 5-tuple
 
-# Protocol
+# Terminology
+
+- Initiator: The active opener of a transport-layer association. In a client-
+  server protocol, this is generally the client.
+
+- Responder: The listener (passive opener) of a transport-layer association.
+  In a client-server protocol, this is generally the server.
+
+- Upper-layer transport: The transport protocol which uses PLUS for
+  common signaling.
+
+
+# Protocol Specification
+
+The PLUS protocol fits between the UDP header and the (encrypted) upper layer
+transport header and payload, adding eight bytes to each packet sent by the
+initiator, and four bytes to each packet sent by the responder. The
+initiator's PLUS header allows the 
 
 ## Bit pattern: Initiator {#initiator_bits}
 
 ~~~
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                       magic = 0xd80000d8                      |
+|         Source Port           |       Destination Port        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                               |R|R|           |
-|                Conection ID                   |S|S|   tflags  |
-|                                               |T|V|           |
+|         UDP Length            |          Checksum             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             Magic                             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             Association Token                 |R|X|   tflags  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Upper Layer Transport Header/Payload             |
+|                             . . .                             |
+
 ~~~
+
 
 The following bits are defined:
 
-* Magic Constant, 32 bits
-* Connection ID, 24 bits
-* RST, 1 bit: Reset
-* RSV, 1bits: reserved for future use in this protocol
-* tflags: 6 bits: available for use in the next layer
+* Magic: 32 bits. This identifies the version of the PLUS protocol in use and
+the upper layer transport in use (and therefore, how the tflags field should
+be interpreted by devices on path). Magic numbers should be chosen such that
+they do not appear as the first 32 bits of any widely deployed UDP-based
+protocol, to allow initiator packets to be probabilistically separated from
+reflected UDP traffic. For the version of the PLUS protocol described in this
+document, in the default case that the initiator does not want to identify the
+upper layer transport in use to the devices along the path, the value of the
+Magic field is 0xd80000d8.
 
-More about the magic number, how it was found, how you could generate new
-ones.  The magic number is also effectively a version number for this layer.
+* Association Token: 24 bits. A cryptographically random token chosen by the initiator for this association. 
+
+* R bit (Reset): The initiator sets this bit to indicate the association is closing.
+
+* X bit (Reserved): Reserved for future use in this protocol. Must be zero.
+
+* tflags: 6 bits: available for use in the next layer
 
 ## Bit pattern: Responder {#responder_bits}
 
@@ -76,17 +110,19 @@ ones.  The magic number is also effectively a version number for this layer.
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                               |R|R|           |
-|                        hmac                   |S|S|   tflags  |
-|                                               |T|V|           |
+|         Source Port           |       Destination Port        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         UDP Length            |          Checksum             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        HMAC                   |R|X|   tflags  |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~
 
 The following bits are defined:
 
 * hmac, 24 bits: HMAC_SHA256(magic, ConnectionID), truncated
-* RST, 1 bit: Reset
-* RSV, 1bits: reserved for future use in this protocol
+* R, 1 bit: Reset
+* X, 1bits: reserved for future use in this protocol
 * tflags: 6 bits: available for use in the next layer
 
 ## Indication of implementation
