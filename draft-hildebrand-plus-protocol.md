@@ -61,8 +61,12 @@ exists].
 
 The PLUS protocol fits between the UDP header and the (encrypted) upper layer
 transport header and payload, adding eight bytes to each packet sent by the
-initiator, and four bytes to each packet sent by the responder. The
-initiator's PLUS header allows the
+initiator, and four bytes to each packet sent by the responder. The initiator's
+PLUS header allows elements on the network path that can see both inbound and
+outbound traffic for an association (including typical firewalls and load
+balancers) to group packets together into flows with better accuracy than
+provided by the 5-tuple of (Source Address, Source Port, Destination Address,
+Destination Port, Protocol).
 
 ## Bit pattern: Initiator {#initiator_bits}
 
@@ -70,9 +74,9 @@ initiator's PLUS header allows the
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         Source Port           |       Destination Port        |
+|      UDP Source Port          |   UDP Destination Port        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         UDP Length            |          Checksum             |
+|         UDP Length            |      UDP Checksum             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                             Magic                             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -86,15 +90,17 @@ initiator's PLUS header allows the
 
 The following bits are defined:
 
-* Magic: 32 bits. Magic numbers should be chosen such that
-they do not appear as the first 32 bits of any widely deployed UDP-based
-protocol, to allow initiator packets to be probabilistically separated from
-reflected UDP traffic. For the version of the PLUS protocol described in this
-document, the value of the Magic field is 0xd80000d8.
+* Magic: 32 bits. Magic numbers should be chosen such that they do not appear as
+  the first 32 bits of any widely deployed UDP-based protocol, to allow
+  initiator packets to be probabilistically separated from reflected UDP
+  traffic. For the version of the PLUS protocol described in this document, the
+  value of the Magic field is 0xd80000d8.
 
-* Association Token: 24 bits. A cryptographically random token chosen by the initiator for this association.
+* Association Token: 24 bits. A cryptographically random token chosen by the
+  initiator for this association.
 
-* R bit (Reset): The initiator sets this bit to indicate the association is closing.
+* R bit (Reset): The initiator sets this bit to indicate the association is
+  closing.
 
 * X bit (Reserved): Reserved for future use in this protocol. Must be zero.
 
@@ -123,12 +129,22 @@ The following bits are defined:
 
 ## Indication of implementation
 
-The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses the
+The receiver performs HMAC_256(0xd80000d8, Association Token), and uses the
 first 3 bytes as the first 3 bytes of the reply.  This is used as a further
 hint that the magic number use was intentional.  Call this function
-Indicator(ConnectionID).
+Indicator(Association Token).
 
 Usefully, none of these truncated HMACs return the magic number.
+
+## Reset bit
+
+Set the Reset bit to tell the path that you're shutting down.  Work will need
+to be done on this section to define what actions the path will take; one
+possible approach is to shorten the association timer to a smaller, constant
+value.
+
+Upper-layer transports should consider providing security around this bit
+before trusting that it comes from the other endpoint.
 
 # Processing
 
@@ -156,9 +172,9 @@ over every new path.
 ## From inside to outside:
 
 * Match magic number
-  * If not, treat as non-PLUS UDP; use port for example
-* Forward 6tuple = 5tuple + ConnectionID
-* Reverse 6tuple = Reverse 5tuple + Indicator(ConnectionID)
+  * If not, treat as non-PLUS UDP
+* Forward 6tuple = 5tuple + Association Token
+* Reverse 6tuple = Reverse 5tuple + Indicator(Association Token)
 * Look up Forward
   * If not, create state keyed by Forward and Reverse
 * Reset timer
@@ -180,9 +196,9 @@ New transport' protocols like QUIC.
 * Define tflags as you see fit
 * Consider if these bits need protection.  At least tflags do.
 * Consider multipath consequences, send before you receive on each path, and
-  consider using a different ConnectionID on different paths to make tracking
-  harder.  If so, figure out how load balancers are going to deal with the
-  problem.
+  consider using a different Association Token on different paths to make
+  tracking harder.  If so, figure out how load balancers are going to deal with
+  the problem.
 
 # Security Considerations {#security}
 
@@ -192,7 +208,7 @@ to be protected.
 Discuss the actual number of bits that window tracking gives you for TCP.
 Contrast this with how useful this would be for tracking people.
 
-ConnectionID's MUST NOT be under the control of untrusted code, like
+Association Tokens MUST NOT be under the control of untrusted code, like
 JavaScript.  It's likely there's a reason for making them not available to
 untrusted code as well.
 
