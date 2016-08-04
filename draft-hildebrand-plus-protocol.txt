@@ -4,8 +4,9 @@
 
 Network Working Group                                      J. Hildebrand
 Internet-Draft                                             Cisco Systems
-Intended status: Standards Track                         August 02, 2016
-Expires: February 3, 2017
+Intended status: Standards Track                             B. Trammell
+Expires: February 5, 2017                                     ETH Zurich
+                                                         August 04, 2016
 
 
                              PLUS Protocol
@@ -30,7 +31,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on February 3, 2017.
+   This Internet-Draft will expire on February 5, 2017.
 
 Copyright Notice
 
@@ -52,26 +53,20 @@ Copyright Notice
 
 
 
-
-Hildebrand              Expires February 3, 2017                [Page 1]
+Hildebrand & Trammell   Expires February 5, 2017                [Page 1]
 
 Internet-Draft                plus-protocol                  August 2016
 
 
 1.  Introduction
 
-1.1.  Terms
+   This document defines a common minimal path layer protocol for UDP-
+   encapsulated transport protocols with in order to provide minimal,
+   transport- independent state exposure to support firewall and load
+   balancer operation [EDITOR'S NOTE cite appropriate section of draft-
+   kuehlewind-plus-ps once it exists].
 
-   o  Initiator: The program initiating the protocol exchange.  Often
-      thought of as the "client" in a client-server protocol.
-
-   o  Responder: The program receiving the initiation request.  Often
-      thought of as the "server" in a client-server protocol.
-
-   o  Transport' protocol: the layer inside PLUS that is providing
-      semantics such as those described in [I-D.ietf-taps-transports].
-
-1.2.  Requirements
+1.1.  Requirements
 
    o  Hint to Initiator's network path that PLUS is likely in use
 
@@ -84,65 +79,118 @@ Internet-Draft                plus-protocol                  August 2016
    o  Matching Responder's packets to Initiator's intent to communicate,
       better than 5-tuple
 
-2.  Protocol
+2.  Terminology
 
-2.1.  Bit pattern: Initiator
+   o  Initiator: The active opener of a transport-layer association.  In
+      a client- server protocol, this is generally the client.
 
-   0                   1                   2                   3
-   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                       magic = 0xd80000d8                      |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                                               |R|R|           |
-   |                Conection ID                   |S|S|   tflags  |
-   |                                               |T|V|           |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   o  Responder: The listener (passive opener) of a transport-layer
+      association.  In a client-server protocol, this is generally the
+      server.
 
-   The following bits are defined:
+   o  Upper-layer transport: The transport protocol which uses PLUS for
+      common signaling.
 
-   o  Magic Constant, 32 bits
+3.  Protocol Specification
 
-   o  Connection ID, 24 bits
+   The PLUS protocol fits between the UDP header and the (encrypted)
+   upper layer transport header and payload, adding eight bytes to each
+   packet sent by the initiator, and four bytes to each packet sent by
+   the responder.  The initiator's PLUS header allows the
 
-   o  RST, 1 bit: Reset
-
+3.1.  Bit pattern: Initiator
 
 
 
-Hildebrand              Expires February 3, 2017                [Page 2]
+
+
+
+
+
+
+
+Hildebrand & Trammell   Expires February 5, 2017                [Page 2]
 
 Internet-Draft                plus-protocol                  August 2016
 
 
-   o  RSV, 1bits: reserved for future use in this protocol
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         Source Port           |       Destination Port        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         UDP Length            |          Checksum             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             Magic                             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             Association Token                 |R|X|   tflags  |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |              Upper Layer Transport Header/Payload             |
+   |                             . . .                             |
+
+
+   The following bits are defined:
+
+   o  Magic: 32 bits.  This identifies the version of the PLUS protocol
+      in use and the upper layer transport in use (and therefore, how
+      the tflags field should be interpreted by devices on path).  Magic
+      numbers should be chosen such that they do not appear as the first
+      32 bits of any widely deployed UDP-based protocol, to allow
+      initiator packets to be probabilistically separated from reflected
+      UDP traffic.  For the version of the PLUS protocol described in
+      this document, in the default case that the initiator does not
+      want to identify the upper layer transport in use to the devices
+      along the path, the value of the Magic field is 0xd80000d8.
+
+   o  Association Token: 24 bits.  A cryptographically random token
+      chosen by the initiator for this association.
+
+   o  R bit (Reset): The initiator sets this bit to indicate the
+      association is closing.
+
+   o  X bit (Reserved): Reserved for future use in this protocol.  Must
+      be zero.
 
    o  tflags: 6 bits: available for use in the next layer
 
-   More about the magic number, how it was found, how you could generate
-   new ones.  The magic number is also effectively a version number for
-   this layer.
+3.2.  Bit pattern: Responder
 
-2.2.  Bit pattern: Responder
+
+
+
+
+
+
+
+
+
+
+Hildebrand & Trammell   Expires February 5, 2017                [Page 3]
+
+Internet-Draft                plus-protocol                  August 2016
+
 
    0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                                               |R|R|           |
-   |                        hmac                   |S|S|   tflags  |
-   |                                               |T|V|           |
+   |         Source Port           |       Destination Port        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         UDP Length            |          Checksum             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        HMAC                   |R|X|   tflags  |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
    The following bits are defined:
 
    o  hmac, 24 bits: HMAC_SHA256(magic, ConnectionID), truncated
 
-   o  RST, 1 bit: Reset
+   o  R, 1 bit: Reset
 
-   o  RSV, 1bits: reserved for future use in this protocol
+   o  X, 1bits: reserved for future use in this protocol
 
    o  tflags: 6 bits: available for use in the next layer
 
-2.3.  Indication of implementation
+3.3.  Indication of implementation
 
    The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses
    the first 3 bytes as the first 3 bytes of the reply.  This is used as
@@ -151,24 +199,15 @@ Internet-Draft                plus-protocol                  August 2016
 
    Usefully, none of these truncated HMACs return the magic number.
 
-3.  Processing
+4.  Processing
 
-   Basic idea: Initiator sends bits defined in Section 2.1, Responder
-   sends bits defined in Section 2.2.  Initiator always has to send
+   Basic idea: Initiator sends bits defined in Section 3.1, Responder
+   sends bits defined in Section 3.2.  Initiator always has to send
    first over every new path.
 
-3.1.  Processing by applications
+4.1.  Processing by applications
 
    o  If the RSV bit is set, ignore the packet
-
-
-
-
-
-Hildebrand              Expires February 3, 2017                [Page 3]
-
-Internet-Draft                plus-protocol                  August 2016
-
 
    o  Initiator: If the hmac doesn't match what you expect, it's either
       an attack or leftover traffic from a previous connection.  Maybe
@@ -178,7 +217,16 @@ Internet-Draft                plus-protocol                  August 2016
    o  Responder: If the magic number isn't there, it's likely an attack.
       Probably best to ignore it.
 
-3.2.  Processing by path elements
+
+
+
+
+Hildebrand & Trammell   Expires February 5, 2017                [Page 4]
+
+Internet-Draft                plus-protocol                  August 2016
+
+
+4.2.  Processing by path elements
 
    o  Assume that all bits are protected by next layer, so you can't
       change them.  Even if you could change them, you may as well just
@@ -188,7 +236,7 @@ Internet-Draft                plus-protocol                  August 2016
       just something we haven't specified as of the time you wrote your
       code.
 
-3.3.  From inside to outside:
+4.3.  From inside to outside:
 
    o  Match magic number
 
@@ -209,7 +257,7 @@ Internet-Draft                plus-protocol                  August 2016
 
    o  Allow
 
-3.4.  From outside to inside:
+4.4.  From outside to inside:
 
    o  Look up Reverse, allow if match
 
@@ -217,16 +265,7 @@ Internet-Draft                plus-protocol                  August 2016
 
    (TODO: determine if reverse timer is useful)
 
-
-
-
-
-Hildebrand              Expires February 3, 2017                [Page 4]
-
-Internet-Draft                plus-protocol                  August 2016
-
-
-4.  Guidelines for next layer
+5.  Guidelines for next layer
 
    New transport' protocols like QUIC.
 
@@ -234,12 +273,21 @@ Internet-Draft                plus-protocol                  August 2016
 
    o  Consider if these bits need protection.  At least tflags do.
 
+
+
+
+
+Hildebrand & Trammell   Expires February 5, 2017                [Page 5]
+
+Internet-Draft                plus-protocol                  August 2016
+
+
    o  Consider multipath consequences, send before you receive on each
       path, and consider using a different ConnectionID on different
       paths to make tracking harder.  If so, figure out how load
       balancers are going to deal with the problem.
 
-5.  Security Considerations
+6.  Security Considerations
 
    Next layer transport protocols SHOULD discuss whether any of these
    bits need to be protected.
@@ -252,11 +300,11 @@ Internet-Draft                plus-protocol                  August 2016
    JavaScript.  It's likely there's a reason for making them not
    available to untrusted code as well.
 
-6.  IANA Considerations
+7.  IANA Considerations
 
    Do we need a registry of magic numbers?
 
-7.  Informative References
+8.  Informative References
 
    [I-D.ietf-taps-transports]
               Fairhurst, G., Trammell, B., and M. Kuehlewind, "Services
@@ -264,7 +312,7 @@ Internet-Draft                plus-protocol                  August 2016
               control mechanisms", draft-ietf-taps-transports-11 (work
               in progress), July 2016.
 
-Author's Address
+Authors' Addresses
 
    Joe Hildebrand
    Cisco Systems
@@ -272,9 +320,17 @@ Author's Address
    Email: jhildebr@cisco.com
 
 
+   Brian Trammell
+   ETH Zurich
+
+   Email: ietf@trammell.ch
 
 
 
 
 
-Hildebrand              Expires February 3, 2017                [Page 5]
+
+
+
+
+Hildebrand & Trammell   Expires February 5, 2017                [Page 6]

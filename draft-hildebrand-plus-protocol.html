@@ -375,30 +375,30 @@
 
   <link href="#rfc.toc" rel="Contents"/>
 <link href="#rfc.section.1" rel="Chapter" title="1 Introduction"/>
-<link href="#rfc.section.1.1" rel="Chapter" title="1.1 Terms"/>
-<link href="#rfc.section.1.2" rel="Chapter" title="1.2 Requirements"/>
-<link href="#rfc.section.2" rel="Chapter" title="2 Protocol"/>
-<link href="#rfc.section.2.1" rel="Chapter" title="2.1 Bit pattern: Initiator"/>
-<link href="#rfc.section.2.2" rel="Chapter" title="2.2 Bit pattern: Responder"/>
-<link href="#rfc.section.2.3" rel="Chapter" title="2.3 Indication of implementation"/>
-<link href="#rfc.section.3" rel="Chapter" title="3 Processing"/>
-<link href="#rfc.section.3.1" rel="Chapter" title="3.1 Processing by applications"/>
-<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Processing by path elements"/>
-<link href="#rfc.section.3.3" rel="Chapter" title="3.3 From inside to outside:"/>
-<link href="#rfc.section.3.4" rel="Chapter" title="3.4 From outside to inside:"/>
-<link href="#rfc.section.4" rel="Chapter" title="4 Guidelines for next layer"/>
-<link href="#rfc.section.5" rel="Chapter" title="5 Security Considerations"/>
-<link href="#rfc.section.6" rel="Chapter" title="6 IANA Considerations"/>
-<link href="#rfc.references" rel="Chapter" title="7 Informative References"/>
+<link href="#rfc.section.1.1" rel="Chapter" title="1.1 Requirements"/>
+<link href="#rfc.section.2" rel="Chapter" title="2 Terminology"/>
+<link href="#rfc.section.3" rel="Chapter" title="3 Protocol Specification"/>
+<link href="#rfc.section.3.1" rel="Chapter" title="3.1 Bit pattern: Initiator"/>
+<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Bit pattern: Responder"/>
+<link href="#rfc.section.3.3" rel="Chapter" title="3.3 Indication of implementation"/>
+<link href="#rfc.section.4" rel="Chapter" title="4 Processing"/>
+<link href="#rfc.section.4.1" rel="Chapter" title="4.1 Processing by applications"/>
+<link href="#rfc.section.4.2" rel="Chapter" title="4.2 Processing by path elements"/>
+<link href="#rfc.section.4.3" rel="Chapter" title="4.3 From inside to outside:"/>
+<link href="#rfc.section.4.4" rel="Chapter" title="4.4 From outside to inside:"/>
+<link href="#rfc.section.5" rel="Chapter" title="5 Guidelines for next layer"/>
+<link href="#rfc.section.6" rel="Chapter" title="6 Security Considerations"/>
+<link href="#rfc.section.7" rel="Chapter" title="7 IANA Considerations"/>
+<link href="#rfc.references" rel="Chapter" title="8 Informative References"/>
 <link href="#rfc.authors" rel="Chapter"/>
 
 
   <meta name="generator" content="xml2rfc version 2.5.1 - http://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
-  <meta name="dct.creator" content="Hildebrand, J." />
+  <meta name="dct.creator" content="Hildebrand, J. and B. Trammell" />
   <meta name="dct.identifier" content="urn:ietf:id:draft-hildebrand-plus-protocol" />
-  <meta name="dct.issued" scheme="ISO8601" content="2016-8-02" />
+  <meta name="dct.issued" scheme="ISO8601" content="2016-8-04" />
   <meta name="dct.abstract" content="Minimal in-band firewall and load balancer signaling for UDP." />
   <meta name="description" content="Minimal in-band firewall and load balancer signaling for UDP." />
 
@@ -419,11 +419,15 @@
 </tr>
 <tr>
   <td class="left">Intended status: Standards Track</td>
-  <td class="right">August 02, 2016</td>
+  <td class="right">B. Trammell</td>
 </tr>
 <tr>
-  <td class="left">Expires: February 3, 2017</td>
-  <td class="right"></td>
+  <td class="left">Expires: February 5, 2017</td>
+  <td class="right">ETH Zurich</td>
+</tr>
+<tr>
+  <td class="left"></td>
+  <td class="right">August 04, 2016</td>
 </tr>
 
     	
@@ -443,22 +447,15 @@
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on February 3, 2017.</p>
+<p>This Internet-Draft will expire on February 5, 2017.</p>
 <h1 id="rfc.copyrightnotice">
   <a href="#rfc.copyrightnotice">Copyright Notice</a>
 </h1>
 <p>Copyright (c) 2016 IETF Trust and the persons identified as the document authors.  All rights reserved.</p>
 <p>This document is subject to BCP 78 and the IETF Trust's Legal Provisions Relating to IETF Documents (http://trustee.ietf.org/license-info) in effect on the date of publication of this document.  Please review these documents carefully, as they describe your rights and restrictions with respect to this document.  Code Components extracted from this document must include Simplified BSD License text as described in Section 4.e of the Trust Legal Provisions and are provided without warranty as described in the Simplified BSD License.</p>
 <h1 id="rfc.section.1"><a href="#rfc.section.1">1.</a> <a href="#introduction" id="introduction">Introduction</a></h1>
-<h1 id="rfc.section.1.1"><a href="#rfc.section.1.1">1.1.</a> <a href="#terms" id="terms">Terms</a></h1>
-<p/>
-
-<ul>
-  <li>Initiator: The program initiating the protocol exchange.  Often thought of as the &#8220;client&#8221; in a client-server protocol.</li>
-  <li>Responder: The program receiving the initiation request.  Often thought of as the &#8220;server&#8221; in a client-server protocol.</li>
-  <li>Transport&#8217; protocol: the layer inside PLUS that is providing semantics such as those described in <a href="#I-D.ietf-taps-transports">[I-D.ietf-taps-transports]</a>.</li>
-</ul>
-<h1 id="rfc.section.1.2"><a href="#rfc.section.1.2">1.2.</a> <a href="#requirements" id="requirements">Requirements</a></h1>
+<p id="rfc.section.1.p.1">This document defines a common minimal path layer protocol for UDP- encapsulated transport protocols with  in order to provide minimal, transport- independent state exposure to support firewall and load balancer operation [EDITOR&#8217;S NOTE cite appropriate section of draft-kuehlewind-plus-ps once it exists].</p>
+<h1 id="rfc.section.1.1"><a href="#rfc.section.1.1">1.1.</a> <a href="#requirements" id="requirements">Requirements</a></h1>
 <p/>
 
 <ul>
@@ -467,55 +464,70 @@
   <li>Further indication to path that PLUS protocol is in use when Responder&#8217;s messages are seen by the path, better than 5-tuple.</li>
   <li>Matching Responder&#8217;s packets to Initiator&#8217;s intent to communicate, better than 5-tuple</li>
 </ul>
-<h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> <a href="#protocol" id="protocol">Protocol</a></h1>
-<h1 id="rfc.section.2.1"><a href="#rfc.section.2.1">2.1.</a> <a href="#initiator_bits" id="initiator_bits">Bit pattern: Initiator</a></h1>
-<pre>
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                       magic = 0xd80000d8                      |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                               |R|R|           |
-|                Conection ID                   |S|S|   tflags  |
-|                                               |T|V|           |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-</pre>
-<p id="rfc.section.2.1.p.1">The following bits are defined:</p>
+<h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> <a href="#terminology" id="terminology">Terminology</a></h1>
 <p/>
 
 <ul>
-  <li>Magic Constant, 32 bits</li>
-  <li>Connection ID, 24 bits</li>
-  <li>RST, 1 bit: Reset</li>
-  <li>RSV, 1bits: reserved for future use in this protocol</li>
+  <li>Initiator: The active opener of a transport-layer association. In a client- server protocol, this is generally the client.</li>
+  <li>Responder: The listener (passive opener) of a transport-layer association.  In a client-server protocol, this is generally the server.</li>
+  <li>Upper-layer transport: The transport protocol which uses PLUS for common signaling.</li>
+</ul>
+<h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#protocol-specification" id="protocol-specification">Protocol Specification</a></h1>
+<p id="rfc.section.3.p.1">The PLUS protocol fits between the UDP header and the (encrypted) upper layer transport header and payload, adding eight bytes to each packet sent by the initiator, and four bytes to each packet sent by the responder. The initiator&#8217;s PLUS header allows the</p>
+<h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#initiator_bits" id="initiator_bits">Bit pattern: Initiator</a></h1>
+<pre>
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Source Port           |       Destination Port        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         UDP Length            |          Checksum             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             Magic                             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             Association Token                 |R|X|   tflags  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Upper Layer Transport Header/Payload             |
+|                             . . .                             |
+
+</pre>
+<p id="rfc.section.3.1.p.1">The following bits are defined:</p>
+<p/>
+
+<ul>
+  <li>Magic: 32 bits. This identifies the version of the PLUS protocol in use and the upper layer transport in use (and therefore, how the tflags field should be interpreted by devices on path). Magic numbers should be chosen such that they do not appear as the first 32 bits of any widely deployed UDP-based protocol, to allow initiator packets to be probabilistically separated from reflected UDP traffic. For the version of the PLUS protocol described in this document, in the default case that the initiator does not want to identify the upper layer transport in use to the devices along the path, the value of the Magic field is 0xd80000d8.</li>
+  <li>Association Token: 24 bits. A cryptographically random token chosen by the initiator for this association.</li>
+  <li>R bit (Reset): The initiator sets this bit to indicate the association is closing.</li>
+  <li>X bit (Reserved): Reserved for future use in this protocol. Must be zero.</li>
   <li>tflags: 6 bits: available for use in the next layer</li>
 </ul>
-<p id="rfc.section.2.1.p.3">More about the magic number, how it was found, how you could generate new ones.  The magic number is also effectively a version number for this layer.</p>
-<h1 id="rfc.section.2.2"><a href="#rfc.section.2.2">2.2.</a> <a href="#responder_bits" id="responder_bits">Bit pattern: Responder</a></h1>
+<h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#responder_bits" id="responder_bits">Bit pattern: Responder</a></h1>
 <pre>
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                               |R|R|           |
-|                        hmac                   |S|S|   tflags  |
-|                                               |T|V|           |
+|         Source Port           |       Destination Port        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         UDP Length            |          Checksum             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        HMAC                   |R|X|   tflags  |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 </pre>
-<p id="rfc.section.2.2.p.1">The following bits are defined:</p>
+<p id="rfc.section.3.2.p.1">The following bits are defined:</p>
 <p/>
 
 <ul>
   <li>hmac, 24 bits: HMAC_SHA256(magic, ConnectionID), truncated</li>
-  <li>RST, 1 bit: Reset</li>
-  <li>RSV, 1bits: reserved for future use in this protocol</li>
+  <li>R, 1 bit: Reset</li>
+  <li>X, 1bits: reserved for future use in this protocol</li>
   <li>tflags: 6 bits: available for use in the next layer</li>
 </ul>
-<h1 id="rfc.section.2.3"><a href="#rfc.section.2.3">2.3.</a> <a href="#indication-of-implementation" id="indication-of-implementation">Indication of implementation</a></h1>
-<p id="rfc.section.2.3.p.1">The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses the first 3 bytes as the first 3 bytes of the reply.  This is used as a further hint that the magic number use was intentional.  Call this function Indicator(ConnectionID).</p>
-<p id="rfc.section.2.3.p.2">Usefully, none of these truncated HMACs return the magic number.</p>
-<h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#processing" id="processing">Processing</a></h1>
-<p id="rfc.section.3.p.1">Basic idea: Initiator sends bits defined in <a href="#initiator_bits">Section 2.1</a>, Responder sends bits defined in <a href="#responder_bits">Section 2.2</a>.  Initiator always has to send first over every new path.</p>
-<h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#processing-by-applications" id="processing-by-applications">Processing by applications</a></h1>
+<h1 id="rfc.section.3.3"><a href="#rfc.section.3.3">3.3.</a> <a href="#indication-of-implementation" id="indication-of-implementation">Indication of implementation</a></h1>
+<p id="rfc.section.3.3.p.1">The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses the first 3 bytes as the first 3 bytes of the reply.  This is used as a further hint that the magic number use was intentional.  Call this function Indicator(ConnectionID).</p>
+<p id="rfc.section.3.3.p.2">Usefully, none of these truncated HMACs return the magic number.</p>
+<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> <a href="#processing" id="processing">Processing</a></h1>
+<p id="rfc.section.4.p.1">Basic idea: Initiator sends bits defined in <a href="#initiator_bits">Section 3.1</a>, Responder sends bits defined in <a href="#responder_bits">Section 3.2</a>.  Initiator always has to send first over every new path.</p>
+<h1 id="rfc.section.4.1"><a href="#rfc.section.4.1">4.1.</a> <a href="#processing-by-applications" id="processing-by-applications">Processing by applications</a></h1>
 <p/>
 
 <ul>
@@ -523,14 +535,14 @@
   <li>Initiator: If the hmac doesn&#8217;t match what you expect, it&#8217;s either an attack or leftover traffic from a previous connection.  Maybe send an unsigned RST? (maybe this is a policy or transport-specific decision)</li>
   <li>Responder: If the magic number isn&#8217;t there, it&#8217;s likely an attack.  Probably best to ignore it.</li>
 </ul>
-<h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#processing-by-path-elements" id="processing-by-path-elements">Processing by path elements</a></h1>
+<h1 id="rfc.section.4.2"><a href="#rfc.section.4.2">4.2.</a> <a href="#processing-by-path-elements" id="processing-by-path-elements">Processing by path elements</a></h1>
 <p/>
 
 <ul>
   <li>Assume that all bits are protected by next layer, so you can&#8217;t change them.  Even if you could change them, you may as well just drop the packet, since delivery won&#8217;t work.</li>
   <li>Don&#8217;t think that having RSV set means this is an attack.  It&#8217;s just something we haven&#8217;t specified as of the time you wrote your code.</li>
 </ul>
-<h1 id="rfc.section.3.3"><a href="#rfc.section.3.3">3.3.</a> <a href="#from-inside-to-outside" id="from-inside-to-outside">From inside to outside:</a></h1>
+<h1 id="rfc.section.4.3"><a href="#rfc.section.4.3">4.3.</a> <a href="#from-inside-to-outside" id="from-inside-to-outside">From inside to outside:</a></h1>
 <p/>
 
 <ul>
@@ -541,15 +553,15 @@
   <li>Reset timer <ul><li>When timer fires, either drop state or send RST hint both ways without e2e crypto</li></ul></li>
   <li>Allow</li>
 </ul>
-<h1 id="rfc.section.3.4"><a href="#rfc.section.3.4">3.4.</a> <a href="#from-outside-to-inside" id="from-outside-to-inside">From outside to inside:</a></h1>
+<h1 id="rfc.section.4.4"><a href="#rfc.section.4.4">4.4.</a> <a href="#from-outside-to-inside" id="from-outside-to-inside">From outside to inside:</a></h1>
 <p/>
 
 <ul>
   <li>Look up Reverse, allow if match <ul><li>If not, treat as non-PLUS UDP</li></ul></li>
 </ul>
-<p id="rfc.section.3.4.p.2">(TODO: determine if reverse timer is useful)</p>
-<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> <a href="#guidelines-for-next-layer" id="guidelines-for-next-layer">Guidelines for next layer</a></h1>
-<p id="rfc.section.4.p.1">New transport&#8217; protocols like QUIC.</p>
+<p id="rfc.section.4.4.p.2">(TODO: determine if reverse timer is useful)</p>
+<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> <a href="#guidelines-for-next-layer" id="guidelines-for-next-layer">Guidelines for next layer</a></h1>
+<p id="rfc.section.5.p.1">New transport&#8217; protocols like QUIC.</p>
 <p/>
 
 <ul>
@@ -557,13 +569,13 @@
   <li>Consider if these bits need protection.  At least tflags do.</li>
   <li>Consider multipath consequences, send before you receive on each path, and consider using a different ConnectionID on different paths to make tracking harder.  If so, figure out how load balancers are going to deal with the problem.</li>
 </ul>
-<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> <a href="#security" id="security">Security Considerations</a></h1>
-<p id="rfc.section.5.p.1">Next layer transport protocols SHOULD discuss whether any of these bits need to be protected.</p>
-<p id="rfc.section.5.p.2">Discuss the actual number of bits that window tracking gives you for TCP.  Contrast this with how useful this would be for tracking people.</p>
-<p id="rfc.section.5.p.3">ConnectionID&#8217;s MUST NOT be under the control of untrusted code, like JavaScript.  It&#8217;s likely there&#8217;s a reason for making them not available to untrusted code as well.</p>
-<h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> <a href="#iana-considerations" id="iana-considerations">IANA Considerations</a></h1>
-<p id="rfc.section.6.p.1">Do we need a registry of magic numbers?</p>
-<h1 id="rfc.references"><a href="#rfc.references">7.</a> Informative References</h1>
+<h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> <a href="#security" id="security">Security Considerations</a></h1>
+<p id="rfc.section.6.p.1">Next layer transport protocols SHOULD discuss whether any of these bits need to be protected.</p>
+<p id="rfc.section.6.p.2">Discuss the actual number of bits that window tracking gives you for TCP.  Contrast this with how useful this would be for tracking people.</p>
+<p id="rfc.section.6.p.3">ConnectionID&#8217;s MUST NOT be under the control of untrusted code, like JavaScript.  It&#8217;s likely there&#8217;s a reason for making them not available to untrusted code as well.</p>
+<h1 id="rfc.section.7"><a href="#rfc.section.7">7.</a> <a href="#iana-considerations" id="iana-considerations">IANA Considerations</a></h1>
+<p id="rfc.section.7.p.1">Do we need a registry of magic numbers?</p>
+<h1 id="rfc.references"><a href="#rfc.references">8.</a> Informative References</h1>
 <table>
   <tbody>
     <tr>
@@ -575,7 +587,7 @@
   </tbody>
 </table>
 <h1 id="rfc.authors">
-  <a href="#rfc.authors">Author's Address</a>
+  <a href="#rfc.authors">Authors' Addresses</a>
 </h1>
 <div class="avoidbreak">
   <address class="vcard">
@@ -598,6 +610,27 @@
 	<span class="vcardline">EMail: <a href="mailto:jhildebr@cisco.com">jhildebr@cisco.com</a></span>
 
   </address>
+</div><div class="avoidbreak">
+  <address class="vcard">
+	<span class="vcardline">
+	  <span class="fn">Brian Trammell</span> 
+	  <span class="n hidden">
+		<span class="family-name">Trammell</span>
+	  </span>
+	</span>
+	<span class="org vcardline">ETH Zurich</span>
+	<span class="adr">
+	  
+	  <span class="vcardline">
+		<span class="locality"></span> 
+		<span class="region"></span>
+		<span class="code"></span>
+	  </span>
+	  <span class="country-name vcardline"></span>
+	</span>
+	<span class="vcardline">EMail: <a href="mailto:ietf@trammell.ch">ietf@trammell.ch</a></span>
+
+  </address>
 </div>
   
   <hr class="noprint" />
@@ -605,22 +638,22 @@
   <ul class="toc">
 
   	<li>1.   <a href="#rfc.section.1">Introduction</a></li>
-<ul><li>1.1.   <a href="#rfc.section.1.1">Terms</a></li>
-<li>1.2.   <a href="#rfc.section.1.2">Requirements</a></li>
-</ul><li>2.   <a href="#rfc.section.2">Protocol</a></li>
-<ul><li>2.1.   <a href="#rfc.section.2.1">Bit pattern: Initiator</a></li>
-<li>2.2.   <a href="#rfc.section.2.2">Bit pattern: Responder</a></li>
-<li>2.3.   <a href="#rfc.section.2.3">Indication of implementation</a></li>
-</ul><li>3.   <a href="#rfc.section.3">Processing</a></li>
-<ul><li>3.1.   <a href="#rfc.section.3.1">Processing by applications</a></li>
-<li>3.2.   <a href="#rfc.section.3.2">Processing by path elements</a></li>
-<li>3.3.   <a href="#rfc.section.3.3">From inside to outside:</a></li>
-<li>3.4.   <a href="#rfc.section.3.4">From outside to inside:</a></li>
-</ul><li>4.   <a href="#rfc.section.4">Guidelines for next layer</a></li>
-<li>5.   <a href="#rfc.section.5">Security Considerations</a></li>
-<li>6.   <a href="#rfc.section.6">IANA Considerations</a></li>
-<li>7.   <a href="#rfc.references">Informative References</a></li>
-<li><a href="#rfc.authors">Author's Address</a></li>
+<ul><li>1.1.   <a href="#rfc.section.1.1">Requirements</a></li>
+</ul><li>2.   <a href="#rfc.section.2">Terminology</a></li>
+<li>3.   <a href="#rfc.section.3">Protocol Specification</a></li>
+<ul><li>3.1.   <a href="#rfc.section.3.1">Bit pattern: Initiator</a></li>
+<li>3.2.   <a href="#rfc.section.3.2">Bit pattern: Responder</a></li>
+<li>3.3.   <a href="#rfc.section.3.3">Indication of implementation</a></li>
+</ul><li>4.   <a href="#rfc.section.4">Processing</a></li>
+<ul><li>4.1.   <a href="#rfc.section.4.1">Processing by applications</a></li>
+<li>4.2.   <a href="#rfc.section.4.2">Processing by path elements</a></li>
+<li>4.3.   <a href="#rfc.section.4.3">From inside to outside:</a></li>
+<li>4.4.   <a href="#rfc.section.4.4">From outside to inside:</a></li>
+</ul><li>5.   <a href="#rfc.section.5">Guidelines for next layer</a></li>
+<li>6.   <a href="#rfc.section.6">Security Considerations</a></li>
+<li>7.   <a href="#rfc.section.7">IANA Considerations</a></li>
+<li>8.   <a href="#rfc.references">Informative References</a></li>
+<li><a href="#rfc.authors">Authors' Addresses</a></li>
 
 
   </ul>
