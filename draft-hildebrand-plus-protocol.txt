@@ -96,12 +96,12 @@ Internet-Draft                plus-protocol                  August 2016
    The PLUS protocol fits between the UDP header and the (encrypted)
    upper layer transport header and payload, adding eight bytes to each
    packet sent by the initiator, and four bytes to each packet sent by
-   the responder.  The initiator's PLUS header allows the
-
-3.1.  Bit pattern: Initiator
-
-
-
+   the responder.  The initiator's PLUS header allows elements on the
+   network path that can see both inbound and outbound traffic for an
+   association (including typical firewalls and load balancers) to group
+   packets together into flows with better accuracy than provided by the
+   5-tuple of (Source Address, Source Port, Destination Address,
+   Destination Port, Protocol).
 
 
 
@@ -114,12 +114,14 @@ Hildebrand & Trammell   Expires February 5, 2017                [Page 2]
 Internet-Draft                plus-protocol                  August 2016
 
 
+3.1.  Bit pattern: Initiator
+
     0                   1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |         Source Port           |       Destination Port        |
+   |      UDP Source Port          |   UDP Destination Port        |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |         UDP Length            |          Checksum             |
+   |         UDP Length            |      UDP Checksum             |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                             Magic                             |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -161,14 +163,14 @@ Internet-Draft                plus-protocol                  August 2016
    |                        HMAC                   |R|X|   tflags  |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-   The following bits are defined:
-
 
 
 Hildebrand & Trammell   Expires February 5, 2017                [Page 3]
 
 Internet-Draft                plus-protocol                  August 2016
 
+
+   The following bits are defined:
 
    o  hmac, 24 bits: HMAC_SHA256(magic, ConnectionID), truncated
 
@@ -180,10 +182,10 @@ Internet-Draft                plus-protocol                  August 2016
 
 3.3.  Indication of implementation
 
-   The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses
-   the first 3 bytes as the first 3 bytes of the reply.  This is used as
-   a further hint that the magic number use was intentional.  Call this
-   function Indicator(ConnectionID).
+   The receiver performs HMAC_256(0xd80000d8, Association Token), and
+   uses the first 3 bytes as the first 3 bytes of the reply.  This is
+   used as a further hint that the magic number use was intentional.
+   Call this function Indicator(Association Token).
 
    Usefully, none of these truncated HMACs return the magic number.
 
@@ -219,8 +221,6 @@ Internet-Draft                plus-protocol                  August 2016
 
 
 
-
-
 Hildebrand & Trammell   Expires February 5, 2017                [Page 4]
 
 Internet-Draft                plus-protocol                  August 2016
@@ -240,11 +240,11 @@ Internet-Draft                plus-protocol                  August 2016
 
    o  Match magic number
 
-      *  If not, treat as non-PLUS UDP; use port for example
+      *  If not, treat as non-PLUS UDP
 
-   o  Forward 6tuple = 5tuple + ConnectionID
+   o  Forward 6tuple = 5tuple + Association Token
 
-   o  Reverse 6tuple = Reverse 5tuple + Indicator(ConnectionID)
+   o  Reverse 6tuple = Reverse 5tuple + Indicator(Association Token)
 
    o  Look up Forward
 
@@ -283,9 +283,9 @@ Internet-Draft                plus-protocol                  August 2016
 
 
    o  Consider multipath consequences, send before you receive on each
-      path, and consider using a different ConnectionID on different
-      paths to make tracking harder.  If so, figure out how load
-      balancers are going to deal with the problem.
+      path, and consider using a different Association Token on
+      different paths to make tracking harder.  If so, figure out how
+      load balancers are going to deal with the problem.
 
 6.  Security Considerations
 
@@ -296,8 +296,8 @@ Internet-Draft                plus-protocol                  August 2016
    TCP.  Contrast this with how useful this would be for tracking
    people.
 
-   ConnectionID's MUST NOT be under the control of untrusted code, like
-   JavaScript.  It's likely there's a reason for making them not
+   Association Tokens MUST NOT be under the control of untrusted code,
+   like JavaScript.  It's likely there's a reason for making them not
    available to untrusted code as well.
 
 7.  IANA Considerations

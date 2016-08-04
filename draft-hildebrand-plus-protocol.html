@@ -474,15 +474,15 @@
   <li>Upper-layer transport: The transport protocol which uses PLUS for common signaling.</li>
 </ul>
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#protocol-specification" id="protocol-specification">Protocol Specification</a></h1>
-<p id="rfc.section.3.p.1">The PLUS protocol fits between the UDP header and the (encrypted) upper layer transport header and payload, adding eight bytes to each packet sent by the initiator, and four bytes to each packet sent by the responder. The initiator&#8217;s PLUS header allows the</p>
+<p id="rfc.section.3.p.1">The PLUS protocol fits between the UDP header and the (encrypted) upper layer transport header and payload, adding eight bytes to each packet sent by the initiator, and four bytes to each packet sent by the responder. The initiator&#8217;s PLUS header allows elements on the network path that can see both inbound and outbound traffic for an association (including typical firewalls and load balancers) to group packets together into flows with better accuracy than provided by the 5-tuple of (Source Address, Source Port, Destination Address, Destination Port, Protocol).</p>
 <h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#initiator_bits" id="initiator_bits">Bit pattern: Initiator</a></h1>
 <pre>
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         Source Port           |       Destination Port        |
+|      UDP Source Port          |   UDP Destination Port        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         UDP Length            |          Checksum             |
+|         UDP Length            |      UDP Checksum             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                             Magic                             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -524,7 +524,7 @@
   <li>tflags: 6 bits: available for use in the next layer</li>
 </ul>
 <h1 id="rfc.section.3.3"><a href="#rfc.section.3.3">3.3.</a> <a href="#indication-of-implementation" id="indication-of-implementation">Indication of implementation</a></h1>
-<p id="rfc.section.3.3.p.1">The receiver performs HMAC_256(0xd80000d8, ConnectionID), and uses the first 3 bytes as the first 3 bytes of the reply.  This is used as a further hint that the magic number use was intentional.  Call this function Indicator(ConnectionID).</p>
+<p id="rfc.section.3.3.p.1">The receiver performs HMAC_256(0xd80000d8, Association Token), and uses the first 3 bytes as the first 3 bytes of the reply.  This is used as a further hint that the magic number use was intentional.  Call this function Indicator(Association Token).</p>
 <p id="rfc.section.3.3.p.2">Usefully, none of these truncated HMACs return the magic number.</p>
 <h1 id="rfc.section.3.4"><a href="#rfc.section.3.4">3.4.</a> <a href="#reset-bit" id="reset-bit">Reset bit</a></h1>
 <p id="rfc.section.3.4.p.1">Set the Reset bit to tell the path that you&#8217;re shutting down.  Work will need to be done on this section to define what actions the path will take; one possible approach is to shorten the association timer to a smaller, constant value.</p>
@@ -550,9 +550,9 @@
 <p/>
 
 <ul>
-  <li>Match magic number <ul><li>If not, treat as non-PLUS UDP; use port for example</li></ul></li>
-  <li>Forward 6tuple = 5tuple + ConnectionID</li>
-  <li>Reverse 6tuple = Reverse 5tuple + Indicator(ConnectionID)</li>
+  <li>Match magic number <ul><li>If not, treat as non-PLUS UDP</li></ul></li>
+  <li>Forward 6tuple = 5tuple + Association Token</li>
+  <li>Reverse 6tuple = Reverse 5tuple + Indicator(Association Token)</li>
   <li>Look up Forward <ul><li>If not, create state keyed by Forward and Reverse</li></ul></li>
   <li>Reset timer <ul><li>When timer fires, either drop state or send RST hint both ways without e2e crypto</li></ul></li>
   <li>Allow</li>
@@ -571,12 +571,12 @@
 <ul>
   <li>Define tflags as you see fit</li>
   <li>Consider if these bits need protection.  At least tflags do.</li>
-  <li>Consider multipath consequences, send before you receive on each path, and consider using a different ConnectionID on different paths to make tracking harder.  If so, figure out how load balancers are going to deal with the problem.</li>
+  <li>Consider multipath consequences, send before you receive on each path, and consider using a different Association Token on different paths to make tracking harder.  If so, figure out how load balancers are going to deal with the problem.</li>
 </ul>
 <h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> <a href="#security" id="security">Security Considerations</a></h1>
 <p id="rfc.section.6.p.1">Next layer transport protocols SHOULD discuss whether any of these bits need to be protected.</p>
 <p id="rfc.section.6.p.2">Discuss the actual number of bits that window tracking gives you for TCP.  Contrast this with how useful this would be for tracking people.</p>
-<p id="rfc.section.6.p.3">ConnectionID&#8217;s MUST NOT be under the control of untrusted code, like JavaScript.  It&#8217;s likely there&#8217;s a reason for making them not available to untrusted code as well.</p>
+<p id="rfc.section.6.p.3">Association Tokens MUST NOT be under the control of untrusted code, like JavaScript.  It&#8217;s likely there&#8217;s a reason for making them not available to untrusted code as well.</p>
 <h1 id="rfc.section.7"><a href="#rfc.section.7">7.</a> <a href="#iana-considerations" id="iana-considerations">IANA Considerations</a></h1>
 <p id="rfc.section.7.p.1">Do we need a registry of magic numbers?</p>
 <h1 id="rfc.references"><a href="#rfc.references">8.</a> Informative References</h1>
