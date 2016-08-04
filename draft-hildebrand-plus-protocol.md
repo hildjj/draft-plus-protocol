@@ -62,13 +62,13 @@ exists].
 The PLUS protocol fits between the UDP header and the (encrypted) upper layer
 transport header and payload, adding eight bytes to each packet sent by the
 initiator, and four bytes to each packet sent by the responder. The
-initiator's PLUS header allows the 
+initiator's PLUS header allows the
 
 ## Bit pattern: Initiator {#initiator_bits}
 
 ~~~
  0                   1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |         Source Port           |       Destination Port        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -86,17 +86,13 @@ initiator's PLUS header allows the
 
 The following bits are defined:
 
-* Magic: 32 bits. This identifies the version of the PLUS protocol in use and
-the upper layer transport in use (and therefore, how the tflags field should
-be interpreted by devices on path). Magic numbers should be chosen such that
+* Magic: 32 bits. Magic numbers should be chosen such that
 they do not appear as the first 32 bits of any widely deployed UDP-based
 protocol, to allow initiator packets to be probabilistically separated from
 reflected UDP traffic. For the version of the PLUS protocol described in this
-document, in the default case that the initiator does not want to identify the
-upper layer transport in use to the devices along the path, the value of the
-Magic field is 0xd80000d8.
+document, the value of the Magic field is 0xd80000d8.
 
-* Association Token: 24 bits. A cryptographically random token chosen by the initiator for this association. 
+* Association Token: 24 bits. A cryptographically random token chosen by the initiator for this association.
 
 * R bit (Reset): The initiator sets this bit to indicate the association is closing.
 
